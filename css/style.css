@@ -26,6 +26,7 @@ body {
     font-family: 'Rubik';
     font-weight: normal;
     font-style: normal;
+    height: 100vh;
 }
 
 section {
@@ -50,12 +51,6 @@ section {
 
 .start-game-username {
     margin-bottom: 1em;
-}
-
-.start-game-button {
-    font-size: 2.5em;
-    width: 5em;
-    text-transform: uppercase;
 }
 
 .copyright-section {
@@ -109,9 +104,12 @@ section {
 
 .start-game-button {
     border-radius: 4px;
-    background-color: forestgreen;
+    background-color: rgb(102, 255, 51);
     color: #fff;
-    border: 2px solid darkslategray;
+    border: 1px solid #949494;
+    font-size: 2.5em;
+    width: 5em;
+    text-transform: uppercase;
 }
 
 .start-game-button:disabled {

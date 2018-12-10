@@ -4,15 +4,12 @@ const blockWidth = 101,
       blockHeight = 83,
       startX = blockWidth * 2,
       startY = blockWidth * 4,
-      boundaryObject = {
-          left : 0,
-          right : 505,
-          up : 505-83*5,
-          down : 505,
-      };
+      boundaryRight = 505;
 
 let playerImageSrc = "",
     notEmptyInputField = false;
+
+/* Necessary DOM nodes */
 
 const userNameInput = document.querySelector('.start-game-input'),
     startGameButton = document.querySelector('.start-game-button'),
@@ -22,19 +19,21 @@ const userNameInput = document.querySelector('.start-game-input'),
     audioTrack = document.querySelector('.audio-track'),
     soundSwitcher = document.querySelector('.sound-switcher'),
     gameSession = document.querySelector('.game-session'),
-    playersGrid = document.querySelector('.players-row');
+    playersGrid = document.querySelector('.players-row'),
+    playerScoreElement = document.querySelector('.game-session__score'),
+    highScoreElement = document.querySelector('.game-session__maxscore');
 
 // Enemies our player must avoid
-var Enemy = function(xCord, yCord, speed) {
+let Enemy = function(xCord, yCord) {
     this.sprite = 'images/enemy-bug.png';
-    this.speed = speed;
     this.x = xCord;
     this.y = yCord;
+    this.speed = Math.floor(Math.random() * 200) + 120;
 };
 
 Enemy.prototype.update = function(dt) {
 
-    if (this.x < boundaryObject.right) {
+    if (this.x < boundaryRight) {
         this.x += this.speed * dt;
     }
     else {
@@ -47,9 +46,9 @@ Enemy.prototype.render = function() {
     ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
 };
 
-var Player = function(xCord, yCord) {
-    this.sprite = 'images/char-boy.png';
-    this.counter = 0;
+let Player = function(xCord, yCord) {
+    this.score = 0;
+    this.highScore = 0;
     this.x = xCord;
     this.y = yCord;
 };
@@ -60,42 +59,41 @@ Player.prototype.update = function() {
         this.y  = startY;
     }
     if(this.y < 0){
-        this.counter++;
+        this.score++;
         this.y = startY;
     }
-    if(this.x > (boundaryObject.right - blockWidth)){
-        this.x -= boundaryObject.right;
+    if(this.x > (boundaryRight - blockWidth)){
+        this.x -= boundaryRight;
     }
     if(this.x < 0){
-        this.x = (rightBorder - blockWidth);
+        this.x = (boundaryRight - blockWidth);
     }
 
 };
 
-function checkCollisions(){
-    let arrayLength = allEnemies.length;
-    let x = player.x;
-    let y = player.y;
-    for(let i = 0; i < arrayLength; i++){
-        let backCollision = x <= (parseInt(allEnemies[i].x) + SPRITE_WIDTH) && x >= parseInt(allEnemies[i].x);
-        let frontCollision = (x + SPRITE_WIDTH) >= parseInt(allEnemies[i].x) && (x + SPRITE_WIDTH) <= parseInt(allEnemies[i].x + SPRITE_WIDTH);
-        let heightCollision = (y - ENEMY_HEIGHT) === (parseInt(allEnemies[i].y));
-        if( (backCollision || frontCollision) && heightCollision){
-            player.y = START_Y_POINT;
-            player.x = START_X_POINT;
-            player.count = 0;
-        }
-    }
-}
+/* detecting collision between enemies and player */
 
-function isCollide(a, b) {
-    return !(
-        ((a.y + a.height) < (b.y)) ||
-        (a.y > (b.y + b.height)) ||
-        ((a.x + a.width) < b.x) ||
-        (a.x > (b.x + b.width))
-    );
-}
+let checkCollision = function(enemy, player) {
+    if (!(enemy.y + blockHeight < player.y ||
+        enemy.y > player.y + blockHeight ||
+        enemy.x + blockWidth < player.x ||
+        enemy.x > player.x + blockWidth)) {
+        checkHighScore(player.score, player.highScore);
+        return true;
+    }
+    else {
+        return false;
+    }
+};
+
+let checkHighScore = (score, highScore) => {
+
+    if (score > highScore) {
+        highScore = score;
+        highScoreElement.innerHTML = highScore;
+    }
+
+};
 
 Player.prototype.render = function() {
     let imageElement = document.createElement('img');
@@ -118,26 +116,15 @@ Player.prototype.handleInput = function(keyCode) {
 
 };
 
-var firstEnemy = new Enemy(-blockWidth, 60, 30);
-var secondEnemy = new Enemy(-blockWidth, 143, 40);
-var thirdEnemy = new Enemy(-blockWidth, 226, 50);
-var allEnemies = [firstEnemy,secondEnemy,thirdEnemy];
+/* defining enemies and player */
 
-var player = new Player(startX,startY);
+let firstEnemy = new Enemy(-blockWidth, 60),
+    secondEnemy = new Enemy(-blockWidth, 145),
+    thirdEnemy = new Enemy(-blockWidth, 220),
+    allEnemies = [firstEnemy, secondEnemy, thirdEnemy],
+    player = new Player(startX,startY);
 
-
-// This listens for key presses and sends the keys to your
-// Player.handleInput() method. You don't need to modify this.
-document.addEventListener('keyup', function(e) {
-    var allowedKeys = {
-        37: 'left',
-        38: 'up',
-        39: 'right',
-        40: 'down'
-    };
-
-    player.handleInput(allowedKeys[e.keyCode]);
-});
+/* changing disable state of START button */
 
 let checkStartButton = () => {
 
@@ -150,6 +137,8 @@ let checkStartButton = () => {
 
 };
 
+/* adding active class to user thumbs */
+
 let checkActiveClass = (target) => {
 
     let activeElement = document.querySelector('.player-item.active');
@@ -160,6 +149,7 @@ let checkActiveClass = (target) => {
 
 };
 
+/* removing start window and start playing game */
 
 function startGame() {
     let userName = userNameInput.value;
@@ -168,15 +158,36 @@ function startGame() {
     copyRightSection.classList.add('closed');
     gameSession.classList.remove('closed');
 
-    /* looping track playing */
+    /* looping audio track playing */
     audioTrack.addEventListener('ended', function() {
         this.currentTime = 0;
         this.play();
     }, false);
     audioTrack.play();
+
 };
 
 let setupEventListeners = () => {
+
+    /* listening key codes */
+
+    document.addEventListener('keyup', function(e) {
+
+        if (e.keyCode === 13 && e.which === 13 && !startGameButton.disabled) {
+            startGame();
+        }
+
+        let allowedKeys = {
+            37: 'left',
+            38: 'up',
+            39: 'right',
+            40: 'down'
+        };
+
+        player.handleInput(allowedKeys[e.keyCode]);
+    });
+
+    /* listening value from user name input */
 
     userNameInput.addEventListener('input', (event) => {
 
@@ -195,13 +206,7 @@ let setupEventListeners = () => {
         startGame();
     });
 
-    document.addEventListener('keyup', (event) => {
-
-        if (event.keyCode === 13 && event.which === 13 && !startGameButton.disabled) {
-            startGame();
-        }
-
-    });
+    /* turning on/off sound control */
 
     soundSwitcher.addEventListener('click', (event) => {
 
@@ -217,6 +222,8 @@ let setupEventListeners = () => {
 
 
     });
+
+    /* choosing player thumb */
 
     playersGrid.addEventListener('click', (event) => {
 
@@ -234,6 +241,8 @@ let setupEventListeners = () => {
     });
 
 };
+
+/* setup event listeners when page is loaded */
 
 document.addEventListener('DOMContentLoaded', function initHandler() {
 
