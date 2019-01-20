@@ -7,7 +7,7 @@ This task based on one of my successfuly done homeworks from [Kottans](https://g
 It's also a final part of Udacity Object-Oriented JavaScript
 [course](https://classroom.udacity.com/courses/ud015)
 
-Some functionality was made and students should finish it with knowledge of object-oriented JS from this thory course.
+Some functionality was made by course developers and students should finish it with knowledge of object-oriented JS from this theory course.
 
 I have also added choosing players before game init, switching on/off sound during playing this game and allow displaying user high score.
 
